@@ -1,6 +1,6 @@
 # Recette de la maquette
 
-Résultats attendus, à vérifier sur le matériel ; aucun équipement n'a été configuré à distance.
+Critères de recette de la configuration cible, à vérifier sur le matériel. Les résultats ne sont pas réputés acquis avant exécution et conservation des preuves.
 
 | Contrôle | Attendu |
 |---|---|

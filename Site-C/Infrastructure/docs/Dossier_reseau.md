@@ -67,22 +67,22 @@ Toutes les communications proxy/caméras/LAN/Internet passent par le Hillstone. 
 | Caméras — Hillstone | DNS `.66`, Zabbix actif `.67` TCP 10051, réponses à l'administration | Proxy, Internet et autres nouvelles connexions LAN |
 | Internet — Hillstone | Réponses des sessions sortantes autorisées | Nouvelles connexions vers les réseaux internes |
 
-Web = TCP 80/443 ; NTP = UDP 123. Les plages privées sont bloquées avant les sorties Internet, sauf exceptions. Le Hillstone suit les sessions ; les ACL Cisco gardent `established` seulement pour les retours traversant les SVI LAN. Ce mot vérifie ACK/RST sans mémoriser la connexion. Les anciennes règles de retour du proxy dans ACL_VLAN30 ont disparu : le proxy arrive désormais sur Gi1/0/24.
+Web = TCP 80/443 ; NTP = UDP 123. Les plages privées sont bloquées avant les sorties Internet, sauf exceptions. Le Hillstone suit les sessions ; les ACL Cisco gardent `established` seulement pour les retours traversant les SVI LAN. Ce mot vérifie ACK/RST sans mémoriser la connexion. Le proxy rejoint directement l'interface DMZ du Hillstone ; ses échanges avec le LAN traversent le pare-feu et ne nécessitent pas d'ACL de retour proxy sur la SVI du VLAN 30.
 
-## Configuration et migration
+## Mise en place de la configuration cible
 
 [Switch L3](../configuration/Switch-L3.txt) · [Hillstone et routes R1](../configuration/Pare-feu-Hillstone.md) · [Recette](Audit_Site_C.md).
 
-Depuis la console, sauvegarder avant changement et prévoir l'interruption de la maquette. Le transit `172.16.2.192/30` utilise quatre adresses de la réserve LAN ; `.196–.223` restent non attribuées. Vérifier les IP sur la maquette.
+Les étapes ci-dessous décrivent la première mise en place de la maquette cible.
 
-1. Retirer le câble R1–switch ; raccorder R1 au WAN Hillstone. Le switch abandonne `192.168.0.2`, que reprend le pare-feu.
-2. Relier Gi1/0/24 au LAN Hillstone ; appliquer `172.16.2.193/30` sur le switch, `172.16.2.194/30` sur le pare-feu.
-3. Retirer l'ancien lien pare-feu–VLAN 30. Supprimer sur le switch l'ancienne route `172.16.3.160/27 via 172.16.2.70` et la route par défaut via `192.168.0.1` ; appliquer la nouvelle route par défaut via `172.16.2.194`.
-4. Déplacer les caméras vers le port CAMERAS. Supprimer l'ancienne SVI 70 (`no interface Vlan70`), son ACL (`no ip access-list extended ACL_VLAN70`) et le VLAN (`no vlan 70`). Désactiver Gi1/0/23 et le remettre dans VLAN 1, comme dans la cible. Aucun doublon de passerelle `.129`.
-5. Remplacer entièrement les ACL modifiées, les réappliquer et saisir les quatre zones/politiques Hillstone. Supprimer ses anciennes adresses LAN `.70` et route par défaut via `.65`, puis appliquer ses nouvelles routes.
-6. Préparer les routes R1 et le NAT Internet avec son responsable. Valider les tests, puis sauvegarder.
+1. Raccorder R1 à l'interface WAN du Hillstone, l'interface LAN du Hillstone à Gi1/0/24 du switch L3, la carte 2 de Proxmox 2 à l'interface PROXY et les caméras (ou leur switch PoE) à l'interface CAMERAS. Les numéros des ports Hillstone restent à relever sur le modèle réel.
+2. Configurer les adresses de transit : R1 `192.168.0.1/30`, Hillstone WAN `192.168.0.2/30`, switch `172.16.2.193/30` et Hillstone LAN `172.16.2.194/30`.
+3. Créer les VLAN, SVI, relais DHCP, ACL et ports d'accès du switch selon `Switch-L3.txt`. Configurer sa route par défaut vers `172.16.2.194`.
+4. Créer les quatre interfaces/zones, objets, politiques, routes, Trust Host et la journalisation Hillstone selon le guide StoneOS. Affecter le défaut vers R1 `192.168.0.1` et la route LAN via `172.16.2.193`.
+5. Configurer sur R1 les routes de retour vers `172.16.2.0/24` et `172.16.3.128/26` via `192.168.0.2`, puis son NAT/PAT vers l'opérateur.
+6. Installer les VM et services avec les IP prévues, puis dérouler les contrôles de `Audit_Site_C.md`. Conserver configurations et preuves de tests après validation.
 
-Si une ancienne version a été appliquée : remplacer les IP du transit par `172.16.2.193/30` (switch) et `172.16.2.194/30` (Hillstone LAN), la route par défaut switch par `172.16.2.194`, et le prochain saut LAN du Hillstone par `172.16.2.193`. Retirer les anciennes routes incompatibles ; R1 couvre ce transit avec sa route LAN `172.16.2.0/24 via 192.168.0.2`.
+Avant le déploiement, vérifier que les sous-réseaux et les interfaces choisis sont disponibles dans la maquette. Les informations d'accès opérateur de R1, le DNS/publication du proxy et le protocole réel des caméras restent à obtenir ou à valider.
 
 La configuration WAN opérateur de R1 n'est pas fournie : l'accès Internet reste à finaliser sur ce routeur. Les PDF sont des sources historiques ; les fichiers présents décrivent la nouvelle cible. AD complet, publication publique, DNS/mises à jour du proxy et protocole réel des caméras restent à définir.
 

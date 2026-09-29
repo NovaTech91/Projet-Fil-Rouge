@@ -203,7 +203,7 @@ interface Vlan20
 exit
 
 ! VLAN 30
-! Etat cible : remplacer toute ancienne ACL_VLAN30, ne pas ajouter apres un ancien permit ip any.
+! Configuration cible complete de ACL_VLAN30 ; creer cette liste avec cet ordre avant de l'appliquer au SVI.
 ip access-list extended ACL_VLAN30
  permit tcp 172.16.2.64 0.0.0.31 172.16.2.224 0.0.0.31 established
  permit icmp 172.16.2.64 0.0.0.31 172.16.2.224 0.0.0.31 echo-reply
