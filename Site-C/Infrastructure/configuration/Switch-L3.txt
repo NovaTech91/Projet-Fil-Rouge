@@ -1,7 +1,8 @@
 ! SITE C - SWITCH L3
 ! Base : configuration fournie pour le switch réel.
-! LAN : 172.16.2.0/24 sept sous-reseaux /27 utilises ; 172.16.2.192/27 libre sans VLAN.
-! Reserve IP : 172.16.2.193 a 172.16.2.222 ; reseau .192, broadcast .223.
+! LAN : 172.16.2.0/24 ; sept VLAN /27 et transit 172.16.2.192/30.
+! Transit : switch .193, Hillstone .194 ; reseau .192, broadcast .195.
+! Reserve restante : 172.16.2.196 a 172.16.2.223, a decouper avant utilisation.
 ! Aucun VLAN, SVI ou passerelle pour cette reserve.
 ! Cameras et proxy : deux interfaces physiques distinctes sur le Hillstone.
 
@@ -127,15 +128,15 @@ interface GigabitEthernet1/0/23
 ! Ne pas ponter la carte LAN et la carte DMZ sur Proxmox2.
 
 ! =========================
-! TRANSIT VERS HILLSTONE - 192.168.0.4/30 A VALIDER LIBRE
+! TRANSIT VERS HILLSTONE - 172.16.2.192/30
 ! =========================
 interface GigabitEthernet1/0/24
  description TRANSIT_HILLSTONE_LAN
  no switchport
- ip address 192.168.0.5 255.255.255.252
+ ip address 172.16.2.193 255.255.255.252
  no shutdown
 exit
-ip route 0.0.0.0 0.0.0.0 192.168.0.6
+ip route 0.0.0.0 0.0.0.0 172.16.2.194
 
 
 ! =========================

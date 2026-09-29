@@ -4,7 +4,7 @@ Architecture : **Internet → R1 → Hillstone**, puis trois branches : **switch
 
 [Schéma et ACL](docs/Dossier_reseau.md) · [Configuration du switch](configuration/Switch-L3.txt) · [Configuration Hillstone](configuration/Pare-feu-Hillstone.md). Les PDF sont des documents sources historiques ; ce plan fait référence pour la maquette actuelle.
 
-**LAN : 172.16.2.0/24**, découpé en 8 /27 : 7 attribués et 1 bloc IP libre. **DMZ : 172.16.3.128/26**, divisée en 2 /27. Tous les sous-réseaux utilisent le masque **255.255.255.224** (30 hôtes, passerelle comprise).
+**LAN : 172.16.2.0/24**, découpé initialement en 8 /27 : 7 pour les VLAN, le dernier partagé entre le transit /30 et la réserve. **DMZ : 172.16.3.128/26**, divisée en 2 /27. Les VLAN et réseaux DMZ utilisent **255.255.255.224 (/27)**. Le transit switch–Hillstone utilise **255.255.255.252 (/30)**, soit deux adresses utilisables.
 
 | VLAN / zone | Usage | Sous-réseau | Passerelle | Hôtes utilisables | Broadcast |
 |---|---|---|---|---|---|
@@ -14,7 +14,8 @@ Architecture : **Internet → R1 → Hillstone**, puis trois branches : **switch
 | 40 | Wi-Fi employés | 172.16.2.96/27 | 172.16.2.97 (SW) | .97 à .126 | .127 |
 | 50 | VoIP | 172.16.2.128/27 | 172.16.2.129 (SW) | .129 à .158 | .159 |
 | 60 | Wi-Fi invités | 172.16.2.160/27 | 172.16.2.161 (SW) | .161 à .190 | .191 |
-| Non attribué | Réserve IP sans VLAN | 172.16.2.192/27 | Aucune | .193 à .222 | .223 |
+| Transit routé | Switch ↔ Hillstone | 172.16.2.192/30 | Hillstone .194 | .193 à .194 | .195 |
+| Non attribué | Réserve à découper | 172.16.2.196–223 | Aucune | Selon découpage futur | Selon découpage futur |
 | 99 | Management | 172.16.2.224/27 | 172.16.2.225 (SW) | .225 à .254 | .255 |
 | Réseau caméras | Caméras, interface dédiée | 172.16.3.128/27 | 172.16.3.129 (Hillstone) | .129 à .158 | .159 |
 | Réseau proxy | Reverse proxy DMZ | 172.16.3.160/27 | 172.16.3.161 (Hillstone) | .161 à .190 | .191 |
@@ -31,7 +32,9 @@ Les caméras et le proxy utilisent deux interfaces physiques séparées du Hills
 
 ## Réserve IP
 
-Le bloc **172.16.2.192/27** reste libre pour une évolution : **172.16.2.193 à 172.16.2.222**, soit 30 adresses utilisables. `.192` est l'adresse réseau et `.223` le broadcast. Aucun VLAN, aucune SVI, aucune passerelle et aucun pool DHCP ne lui sont affectés. Les autres VLAN gardent leurs adresses actuelles.
+Dans l'ancien bloc de réserve **172.16.2.192/27**, les quatre premières adresses forment le transit **172.16.2.192/30** : réseau `.192`, switch `.193`, pare-feu `.194`, broadcast `.195`. Le lien est routé, sans création de VLAN.
+
+Il reste **172.16.2.196 à 172.16.2.223**, soit **28 adresses non attribuées**. Elles peuvent être découpées en `172.16.2.196/30`, `172.16.2.200/29` et `172.16.2.208/28`. Ce ne sont pas 28 adresses hôtes garanties : les adresses réseau/broadcast dépendront du découpage retenu. Aucun pool DHCP ne doit utiliser ces blocs. Les VLAN existants gardent leurs adresses.
 
 ## Adresses fixes prévues
 
@@ -54,13 +57,22 @@ Exclure ces adresses fixes des baux DHCP. Les adresses .72/.73 des nouveaux nœu
 
 ## Transits entre équipements
 
+**Ce qui a changé :** la liaison switch–pare-feu passe de `192.168.0.4/30` à **`172.16.2.192/30`**, pris dans la réserve du réseau LAN fourni.
+
+- **Switch Gi1/0/24 : `172.16.2.193`**.
+- **Hillstone, interface LAN : `172.16.2.194`**. C'est le prochain saut par défaut du switch.
+- **Masque : `255.255.255.252` (/30)**. Il suffit pour les deux extrémités d'un câble ; `.192` désigne le réseau et `.195` le broadcast.
+- **R1–Hillstone reste en `192.168.0.0/30`** : R1 `.1`, Hillstone WAN `.2`. Ce lien séparé sert à rejoindre l'accès Internet.
+
+Les VLAN, les serveurs et les deux réseaux DMZ ne changent pas d'adresse. Seules quatre adresses de l'ancienne réserve sont utilisées par ce transit ; `.196–.223` restent non attribuées.
+
 | Liaison | Réseau / masque | Côté 1 | Côté 2 |
 |---|---|---|---|
 | R1 ↔ Hillstone WAN | 192.168.0.0/30 — 255.255.255.252 | R1 : 192.168.0.1 | Hillstone : 192.168.0.2 |
-| Switch ↔ Hillstone LAN | 192.168.0.4/30 — 255.255.255.252 | Switch Gi1/0/24 : 192.168.0.5 | Hillstone : 192.168.0.6 |
+| Switch ↔ Hillstone LAN | 172.16.2.192/30 — 255.255.255.252 | Switch Gi1/0/24 : 172.16.2.193 | Hillstone : 172.16.2.194 |
 
-Le nouveau bloc `192.168.0.4/30` est proposé : vérifier qu'il est libre. L'ancienne IP `.2` du switch est transférée au Hillstone WAN ; ne pas activer les deux équipements avec cette IP sur le même lien. L'ancienne adresse `172.16.2.70` est libre dans le VLAN 30, sans nouvelle affectation. La réserve `172.16.2.192/27` reste entière.
+Le transit est prélevé sur la réserve LAN : aucun chevauchement avec les sept VLAN. Vérifier l'absence d'utilisation réelle avant application. Le lien R1–Hillstone reste séparé en `192.168.0.0/30` ; l'ancienne adresse `172.16.2.70` reste libre dans le VLAN 30.
 
-Routes : switch → défaut `.6` ; Hillstone → LAN `172.16.2.0/24` via `.5`, défaut via R1 `.1` ; R1 → réseaux internes via `.2`.
+Routes : switch → défaut `172.16.2.194` ; Hillstone → LAN `172.16.2.0/24` via `172.16.2.193`, défaut via R1 `192.168.0.1` ; R1 → LAN/DMZ via `192.168.0.2`. Le transit est inclus dans la route LAN /24 de R1.
 
 [Câblage et fonctionnement](docs/Dossier_reseau.md) · [Audit](docs/Audit_Site_C.md)

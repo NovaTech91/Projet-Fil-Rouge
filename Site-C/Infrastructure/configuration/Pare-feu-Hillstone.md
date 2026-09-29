@@ -9,18 +9,18 @@ Créer quatre zones L3 distinctes, dans le même VRouter. Chaque port est dédi�
 | Port à identifier | Zone proposée | IP / masque | Raccordement |
 |---|---|---|---|
 | 1 | WAN_R1 | 192.168.0.2/30 — 255.255.255.252 | R1 : 192.168.0.1 |
-| 2 | LAN_SITE_C | 192.168.0.6/30 — 255.255.255.252 | Switch Gi1/0/24 : 192.168.0.5 |
+| 2 | LAN_SITE_C | 172.16.2.194/30 — 255.255.255.252 | Switch Gi1/0/24 : 172.16.2.193 |
 | 3 | DMZ_PROXY | 172.16.3.161/27 — 255.255.255.224 | Carte 2 Proxmox 2 → VM proxy .162 |
 | 4 | CAMERAS | 172.16.3.129/27 — 255.255.255.224 | Caméra ou switch PoE dédié aux caméras |
 
-Vérifier que `192.168.0.4/30` est libre. Ne pas activer DHCP sur ces ports. Les caméras ont des IP fixes `.130–.158`, passerelle `.129`.
+Le transit `172.16.2.192/30` est prélevé sur la réserve du plan LAN ; vérifier qu’il n’est pas utilisé sur la maquette. Ne pas activer DHCP sur ces ports. Les caméras ont des IP fixes `.130–.158`, passerelle `.129`.
 
 | Route sur Hillstone | Prochain saut | Sortie |
 |---|---|---|
-| 172.16.2.0/24 | 192.168.0.5 | LAN_SITE_C |
+| 172.16.2.0/24 | 172.16.2.193 | LAN_SITE_C |
 | 0.0.0.0/0 | 192.168.0.1 | WAN_R1 |
 
-Les deux réseaux DMZ sont directement connectés. Le switch utilise la route par défaut via `192.168.0.6`. **Aucun NAT sur le Hillstone dans cette base** : ni entre zones internes ni vers R1. Le NAT Internet est conservé/préparé sur R1, avec les routes de retour indiquées plus bas.
+Les deux réseaux DMZ et le transit `172.16.2.192/30` sont directement connectés. Cette route connectée /30 est prioritaire sur la route LAN /24 ; R1 couvre déjà le transit avec sa route LAN /24. Le switch utilise la route par défaut via `172.16.2.194`. **Aucun NAT sur le Hillstone dans cette base** : ni entre zones internes ni vers R1. Le NAT Internet est conservé/préparé sur R1, avec les routes de retour indiquées plus bas.
 
 ## Objets à créer
 
@@ -59,7 +59,7 @@ Les caméras ne communiquent ni avec le proxy ni avec Internet. Le port Zabbix a
 
 ## Administration du Hillstone
 
-Changer les identifiants par défaut. Activer HTTPS et SSH seulement sur le port LAN `192.168.0.6` ; désactiver HTTP/Telnet et l'administration sur WAN, proxy et caméras. Dans **System → Device Management → Trust Host** (selon version), autoriser uniquement `172.16.2.224/27` en HTTPS/SSH et retirer toute autorisation globale. Les règles de transit ne remplacent pas cette restriction de gestion locale.
+Changer les identifiants par défaut. Activer HTTPS et SSH seulement sur le port LAN `172.16.2.194` ; désactiver HTTP/Telnet et l'administration sur WAN, proxy et caméras. Dans **System → Device Management → Trust Host** (selon version), autoriser uniquement `172.16.2.224/27` en HTTPS/SSH et retirer toute autorisation globale. Les règles de transit ne remplacent pas cette restriction de gestion locale.
 
 ## R1 : accès Internet et routes de retour
 
@@ -70,7 +70,6 @@ Routes Cisco à intégrer à la configuration existante de R1, en remplaçant le
 ```cisco
 ip route 172.16.2.0 255.255.255.0 192.168.0.2
 ip route 172.16.3.128 255.255.255.192 192.168.0.2
-ip route 192.168.0.4 255.255.255.252 192.168.0.2
 ```
 
 Prévoir le NAT/PAT de `172.16.2.0/24` sur la sortie Internet de R1, sa route par défaut opérateur et ses filtres adaptés. L'accès Internet ne fonctionnera qu'après cette étape ; le fonctionnement interne ne dépend pas du NAT. Ne pas ajouter en parallèle un SNAT Hillstone sans revoir ce choix.
