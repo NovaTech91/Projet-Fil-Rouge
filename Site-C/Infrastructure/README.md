@@ -57,7 +57,7 @@ Exclure ces adresses fixes des baux DHCP. Les adresses .72/.73 des nouveaux nœu
 
 ## Transits entre équipements
 
-**Ce qui a changé :** la liaison switch–pare-feu passe de `192.168.0.4/30` à **`172.16.2.192/30`**, pris dans la réserve du réseau LAN fourni.
+**Liaison switch–pare-feu : `172.16.2.192/30`**, prise dans la réserve du réseau LAN fourni. Les deux configurations et le schéma utilisent les adresses ci-dessous.
 
 - **Switch Gi1/0/24 : `172.16.2.193`**.
 - **Hillstone, interface LAN : `172.16.2.194`**. C'est le prochain saut par défaut du switch.

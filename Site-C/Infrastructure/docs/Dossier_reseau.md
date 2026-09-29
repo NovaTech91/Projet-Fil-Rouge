@@ -82,7 +82,7 @@ Depuis la console, sauvegarder avant changement et prévoir l'interruption de la
 5. Remplacer entièrement les ACL modifiées, les réappliquer et saisir les quatre zones/politiques Hillstone. Supprimer ses anciennes adresses LAN `.70` et route par défaut via `.65`, puis appliquer ses nouvelles routes.
 6. Préparer les routes R1 et le NAT Internet avec son responsable. Valider les tests, puis sauvegarder.
 
-Si la version précédente en `192.168.0.4/30` a été appliquée : remplacer les IP `.5/.6` de ce lien et la route par défaut switch vers `192.168.0.6`, remplacer le prochain saut LAN du Hillstone et retirer la route R1 dédiée à `192.168.0.4/30`.
+Si une ancienne version a été appliquée : remplacer les IP du transit par `172.16.2.193/30` (switch) et `172.16.2.194/30` (Hillstone LAN), la route par défaut switch par `172.16.2.194`, et le prochain saut LAN du Hillstone par `172.16.2.193`. Retirer les anciennes routes incompatibles ; R1 couvre ce transit avec sa route LAN `172.16.2.0/24 via 192.168.0.2`.
 
 La configuration WAN opérateur de R1 n'est pas fournie : l'accès Internet reste à finaliser sur ce routeur. Les PDF sont des sources historiques ; les fichiers présents décrivent la nouvelle cible. AD complet, publication publique, DNS/mises à jour du proxy et protocole réel des caméras restent à définir.
 
