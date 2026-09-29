@@ -86,9 +86,15 @@ Avant le déploiement, vérifier que les sous-réseaux et les interfaces choisis
 
 La configuration WAN opérateur de R1 n'est pas fournie : l'accès Internet reste à finaliser sur ce routeur. Les PDF sont des sources historiques ; les fichiers présents décrivent la nouvelle cible. AD complet, publication publique, DNS/mises à jour du proxy et protocole réel des caméras restent à définir.
 
-## Évolutions prévues
+## HA Proxmox après la configuration initiale
+
+Après la configuration de base du réseau et des trois hôtes, mettre en place le cluster Proxmox HA : quorum à trois nœuds, réplication des VM LAN avec ZFS et test de bascule. La copie cloud sert aux sauvegardes ; elle ne remplace pas la réplication. Mesurer le délai de réplication et la perte de données possible.
+
+Le reverse proxy est une VM unique prévue sur Proxmox 2. Sa carte 2 est reliée au réseau DMZ_PROXY ; ce réseau reste réservé à ce nœud dans la configuration de base. La bascule du reverse proxy vers Proxmox 1 ou 3 n'est donc pas prévue à cette étape.
+
+## Évolution ultérieure
 
 - **Deuxième switch LAN + EtherChannel LACP** : sélectionner deux ports compatibles et un trunk limité aux VLAN utiles. Gi1/0/23 est réservé, un port VLAN 30 peut être réaffecté si libre. Aucun Port-channel n'est configuré aujourd'hui. LACP tolère une panne de lien, pas celle du switch qui porte les passerelles.
-- **HA Proxmox** : stockage partagé/réplication, quorum et bascule à valider. Le proxy reste unique sur Proxmox 2 ; sa panne rend les sites inaccessibles via le proxy.
+- **Haute disponibilité du reverse proxy** : étudier plus tard une extension sécurisée du réseau DMZ_PROXY aux nœuds de reprise, puis tester la bascule de la VM. Tant que cette évolution n'est pas réalisée, le reverse proxy reste un point de panne unique.
 
 [Plan d'adressage](../README.md)
