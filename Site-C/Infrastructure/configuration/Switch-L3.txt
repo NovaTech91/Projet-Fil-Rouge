@@ -1,0 +1,312 @@
+! SITE C - SWITCH L3
+! Base : configuration fournie pour le switch réel.
+! LAN : 172.16.2.0/24 sept sous-reseaux /27 utilises ; 172.16.2.192/27 libre sans VLAN.
+! Reserve IP : 172.16.2.193 a 172.16.2.222 ; reseau .192, broadcast .223.
+! Aucun VLAN, SVI ou passerelle pour cette reserve.
+! Cameras et proxy : deux interfaces physiques distinctes sur le Hillstone.
+
+enable
+configure terminal
+hostname SW-L3
+enable secret A_REMPLACER
+no ip domain-lookup
+ip routing
+
+! =========================
+! CREATION DES VLAN
+! =========================
+vlan 10
+ name SERVICE1
+vlan 20
+ name SERVICE2
+vlan 30
+ name SERVEURS
+vlan 40
+ name WIFI_EMPLOYES
+vlan 50
+ name VOIP
+vlan 60
+ name WIFI_INVITES
+vlan 99
+ name MANAGEMENT
+exit
+
+! =========================
+! PASSERELLES / SVI LAN
+! =========================
+interface Vlan10
+ description GW_SERVICE1
+ ip address 172.16.2.1 255.255.255.224
+ ip helper-address 172.16.2.66
+ no shutdown
+interface Vlan20
+ description GW_SERVICE2
+ ip address 172.16.2.33 255.255.255.224
+ ip helper-address 172.16.2.66
+ no shutdown
+interface Vlan30
+ description GW_SERVEURS_3_PROXMOX_WEB
+ ip address 172.16.2.65 255.255.255.224
+ no shutdown
+interface Vlan40
+ description GW_WIFI_EMPLOYES
+ ip address 172.16.2.97 255.255.255.224
+ ip helper-address 172.16.2.66
+ no shutdown
+interface Vlan50
+ description GW_VOIP
+ ip address 172.16.2.129 255.255.255.224
+ ip helper-address 172.16.2.66
+ no shutdown
+interface Vlan60
+ description GW_WIFI_INVITES
+ ip address 172.16.2.161 255.255.255.224
+ ip helper-address 172.16.2.66
+ no shutdown
+interface Vlan99
+ description GW_MANAGEMENT
+ ip address 172.16.2.225 255.255.255.224
+ no shutdown
+
+! Passerelles des cameras et du proxy sur le pare-feu.
+
+! =========================
+! PORTS D'ACCES - MAPPING FOURNI
+! =========================
+interface range GigabitEthernet1/0/1 - 4
+ description ACCES_SERVICE1
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+interface range GigabitEthernet1/0/5 - 8
+ description ACCES_SERVICE2
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ no shutdown
+interface range GigabitEthernet1/0/9 - 12
+ description ACCES_SERVEURS_3_PROXMOX_WEB
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ no shutdown
+interface range GigabitEthernet1/0/13 - 16
+ description ACCES_WIFI_EMPLOYES
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+interface range GigabitEthernet1/0/17 - 20
+ description ACCES_VOIP
+ switchport mode access
+ switchport access vlan 50
+ spanning-tree portfast
+ no shutdown
+interface GigabitEthernet1/0/21
+ description POSTE_ADMINISTRATION
+ switchport mode access
+ switchport access vlan 99
+ spanning-tree portfast
+ no shutdown
+interface GigabitEthernet1/0/22
+ description ACCES_WIFI_INVITES
+ switchport mode access
+ switchport access vlan 60
+ spanning-tree portfast
+ no shutdown
+interface GigabitEthernet1/0/23
+ description RESERVE_EVOLUTION
+ switchport mode access
+ switchport access vlan 1
+ shutdown
+
+! RACCORDEMENTS : ports exacts a confirmer dans Gi1/0/9-12 (access VLAN30).
+! Trois noeuds Proxmox : trois ports parmi Gi1/0/9-12 ; le quatrieme reste disponible.
+! Proxmox2 carte 2 va directement sur interface DMZ du Hillstone, sans trunk.
+! Ne pas ponter la carte LAN et la carte DMZ sur Proxmox2.
+
+! =========================
+! TRANSIT VERS HILLSTONE - 192.168.0.4/30 A VALIDER LIBRE
+! =========================
+interface GigabitEthernet1/0/24
+ description TRANSIT_HILLSTONE_LAN
+ no switchport
+ ip address 192.168.0.5 255.255.255.252
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 192.168.0.6
+
+
+! =========================
+! SSH
+! =========================
+ip domain name yai.local
+username admin privilege 15 secret A_REMPLACER
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip access-list standard SSH_VLAN99
+ permit 172.16.2.224 0.0.0.31
+ deny any log
+exit
+line vty 0 15
+ login local
+ transport input ssh
+ access-class SSH_VLAN99 in
+ exec-timeout 10 0
+exit
+
+! =========================
+! ACL PAR VLAN
+! =========================
+! VLAN 10
+ip access-list extended ACL_VLAN10
+ permit udp any eq 68 any eq 67
+ permit udp 172.16.2.0 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.0 0.0.0.31 host 172.16.2.66 eq 53
+ permit ip 172.16.2.0 0.0.0.31 172.16.2.32 0.0.0.31
+ permit ip 172.16.2.0 0.0.0.31 172.16.2.96 0.0.0.31
+ permit tcp 172.16.2.0 0.0.0.31 host 172.16.3.162 eq 80
+ permit tcp 172.16.2.0 0.0.0.31 host 172.16.3.162 eq 443
+ deny ip 172.16.2.0 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.0 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.0 0.0.0.31 192.168.0.0 0.0.255.255
+ permit tcp 172.16.2.0 0.0.0.31 any eq 80
+ permit tcp 172.16.2.0 0.0.0.31 any eq 443
+ permit udp 172.16.2.0 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+interface Vlan10
+ ip access-group ACL_VLAN10 in
+exit
+
+! VLAN 20
+ip access-list extended ACL_VLAN20
+ permit udp any eq 68 any eq 67
+ permit udp 172.16.2.32 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.32 0.0.0.31 host 172.16.2.66 eq 53
+ permit ip 172.16.2.32 0.0.0.31 172.16.2.0 0.0.0.31
+ permit ip 172.16.2.32 0.0.0.31 172.16.2.96 0.0.0.31
+ permit tcp 172.16.2.32 0.0.0.31 host 172.16.3.162 eq 80
+ permit tcp 172.16.2.32 0.0.0.31 host 172.16.3.162 eq 443
+ deny ip 172.16.2.32 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.32 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.32 0.0.0.31 192.168.0.0 0.0.255.255
+ permit tcp 172.16.2.32 0.0.0.31 any eq 80
+ permit tcp 172.16.2.32 0.0.0.31 any eq 443
+ permit udp 172.16.2.32 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+interface Vlan20
+ ip access-group ACL_VLAN20 in
+exit
+
+! VLAN 30
+! Etat cible : remplacer toute ancienne ACL_VLAN30, ne pas ajouter apres un ancien permit ip any.
+ip access-list extended ACL_VLAN30
+ permit tcp 172.16.2.64 0.0.0.31 172.16.2.224 0.0.0.31 established
+ permit icmp 172.16.2.64 0.0.0.31 172.16.2.224 0.0.0.31 echo-reply
+ permit udp host 172.16.2.66 eq 53 172.16.2.0 0.0.0.255
+ permit tcp host 172.16.2.66 eq 53 172.16.2.0 0.0.0.255 established
+ permit udp host 172.16.2.66 eq 53 172.16.3.128 0.0.0.31
+ permit tcp host 172.16.2.66 eq 53 172.16.3.128 0.0.0.31 established
+ permit udp host 172.16.2.66 eq 67 172.16.2.0 0.0.0.255 eq 67
+ permit udp host 172.16.2.66 eq 67 172.16.2.0 0.0.0.255 eq 68
+ permit tcp host 172.16.2.67 eq 10051 172.16.3.128 0.0.0.31 established
+ permit tcp host 172.16.2.69 eq 80 host 172.16.3.162 established
+ permit tcp host 172.16.2.69 eq 443 host 172.16.3.162 established
+ permit tcp host 172.16.2.71 eq 80 host 172.16.3.162 established
+ permit tcp host 172.16.2.71 eq 443 host 172.16.3.162 established
+ deny ip 172.16.2.64 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.64 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.64 0.0.0.31 192.168.0.0 0.0.255.255
+ permit udp host 172.16.2.66 any eq 53
+ permit tcp host 172.16.2.66 any eq 53
+ permit tcp 172.16.2.64 0.0.0.31 any eq 80
+ permit tcp 172.16.2.64 0.0.0.31 any eq 443
+ permit udp 172.16.2.64 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+
+interface Vlan30
+ ip access-group ACL_VLAN30 in
+exit
+
+! VLAN 40
+ip access-list extended ACL_WIFI_EMPLOYES
+ permit udp any eq 68 any eq 67
+ permit udp 172.16.2.96 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.96 0.0.0.31 host 172.16.2.66 eq 53
+ permit ip 172.16.2.96 0.0.0.31 172.16.2.0 0.0.0.31
+ permit ip 172.16.2.96 0.0.0.31 172.16.2.32 0.0.0.31
+ permit tcp 172.16.2.96 0.0.0.31 host 172.16.3.162 eq 80
+ permit tcp 172.16.2.96 0.0.0.31 host 172.16.3.162 eq 443
+ deny ip 172.16.2.96 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.96 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.96 0.0.0.31 192.168.0.0 0.0.255.255
+ permit tcp 172.16.2.96 0.0.0.31 any eq 80
+ permit tcp 172.16.2.96 0.0.0.31 any eq 443
+ permit udp 172.16.2.96 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+interface Vlan40
+ ip access-group ACL_WIFI_EMPLOYES in
+exit
+
+! VLAN 50
+ip access-list extended ACL_VLAN50
+ permit udp any eq 68 any eq 67
+ permit udp 172.16.2.128 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.128 0.0.0.31 host 172.16.2.66 eq 53
+ deny ip 172.16.2.128 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.128 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.128 0.0.0.31 192.168.0.0 0.0.255.255
+ permit tcp 172.16.2.128 0.0.0.31 any eq 80
+ permit tcp 172.16.2.128 0.0.0.31 any eq 443
+ permit udp 172.16.2.128 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+interface Vlan50
+ ip access-group ACL_VLAN50 in
+exit
+
+! VLAN 60
+ip access-list extended ACL_WIFI_INVITES
+ permit udp any eq 68 any eq 67
+ permit udp 172.16.2.160 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.160 0.0.0.31 host 172.16.2.66 eq 53
+ permit tcp 172.16.2.160 0.0.0.31 host 172.16.3.162 eq 80
+ permit tcp 172.16.2.160 0.0.0.31 host 172.16.3.162 eq 443
+ deny ip 172.16.2.160 0.0.0.31 10.0.0.0 0.255.255.255
+ deny ip 172.16.2.160 0.0.0.31 172.16.0.0 0.15.255.255
+ deny ip 172.16.2.160 0.0.0.31 192.168.0.0 0.0.255.255
+ permit tcp 172.16.2.160 0.0.0.31 any eq 80
+ permit tcp 172.16.2.160 0.0.0.31 any eq 443
+ permit udp 172.16.2.160 0.0.0.31 any eq 123
+ deny ip any any log
+exit
+interface Vlan60
+ ip access-group ACL_WIFI_INVITES in
+exit
+
+
+! Le filtrage de la DMZ proxy est sur Hillstone.
+
+! VLAN 99
+ip access-list extended ACL_VLAN99
+ permit ip 172.16.2.224 0.0.0.31 any
+exit
+interface Vlan99
+ ip access-group ACL_VLAN99 in
+exit
+
+end
+! Sauvegarder avec write memory uniquement apres recette.
+
+! Verification :
+! show vlan brief
+! show interfaces trunk
+! show ip interface brief
+! show ip route
+! show access-lists
+! show interfaces GigabitEthernet1/0/24
