@@ -1,0 +1,23 @@
+# Modele a installer sur 172.16.3.72/26 apres remplacement des marqueurs.
+# Certificat valide et cle privee deja presents, permissions adaptees.
+upstream site_b_fronts {
+    server 172.16.3.80:80;
+    server 172.16.3.81:80;
+    server 172.16.3.82:80;
+}
+server {
+    listen 443 ssl;
+    server_name __NOM_DNS_PUBLIC__;
+    ssl_certificate __CHEMIN_CERTIFICAT_PEM__;
+    ssl_certificate_key __CHEMIN_CLE_PRIVEE_PEM__;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    location / {
+        proxy_pass http://site_b_fronts;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Ecraser l'en-tete externe non fiable au premier proxy de confiance.
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+# Aucun listen 80 public ; aucun portail d'administration dans ce vhost.

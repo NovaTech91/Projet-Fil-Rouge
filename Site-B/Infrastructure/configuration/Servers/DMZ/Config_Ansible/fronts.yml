@@ -32,13 +32,16 @@
         content: |
           server {
               listen 80 default_server;
-              listen [::]:80 default_server;
+              # IPv6 non active sans plan de filtrage dedie.
+              allow 172.16.3.72;
+              allow 127.0.0.1;
+              deny all;
               root /var/www/html;
               index index.html;
 
               location = /healthz {
                   access_log off;
-                  return 200 "ok\n";
+                  try_files /healthz =404;
                   add_header Content-Type text/plain;
               }
 
@@ -67,6 +70,14 @@
         state: absent
       notify: Recharger nginx
 
+    - name: Fichier de controle de sante
+      ansible.builtin.copy:
+        dest: /var/www/html/healthz
+        content: "ok\n"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
     - name: Page nominative
       ansible.builtin.template:
         src: index.html.j2
@@ -79,6 +90,15 @@
     - name: Valider la configuration
       ansible.builtin.command: nginx -t
       changed_when: false
+
+    - name: Demarrer nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Appliquer la configuration avant le controle HTTP
+      ansible.builtin.meta: flush_handlers
 
     - name: Verifier le service
       ansible.builtin.uri:

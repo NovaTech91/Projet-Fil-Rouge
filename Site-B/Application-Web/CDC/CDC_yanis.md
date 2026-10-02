@@ -36,7 +36,7 @@ Les choix explicites du présent cahier des charges prévalent lorsqu’ils pré
 
 ## 2. Contexte et enjeux
 
-L’entreprise dispose d’un siège de deux agences. Son système d’information comportera notamment :
+L’entreprise dispose d’un siège de deux agences. Son système d’information comporte notamment :
 
 - plusieurs sous-réseaux et VLAN ;
 - des serveurs et services internes ;
@@ -45,9 +45,7 @@ L’entreprise dispose d’un siège de deux agences. Son système d’informati
 - des tunnels VPN et des accès de télétravail ;
 - des outils de supervision, de sauvegarde, de documentation et d’assistance.
 
-L'installation de ces système fait l'objet d'un autre cahier des charges dédié à l'architecture.
-
-L’entreprise souhaite disposer d’une interface claire pour les salariés et d’une vue technique centralisée pour les équipes d’administration, sans exposer les outils sensibles ni les protocoles d’administration sur Internet.
+Les informations sont actuellement réparties entre différents outils. L’entreprise souhaite disposer d’une interface claire pour les salariés et d’une vue technique centralisée pour les équipes d’administration, sans exposer les outils sensibles ni les protocoles d’administration sur Internet.
 
 Les enjeux principaux sont :
 
@@ -103,21 +101,22 @@ Les enjeux principaux sont :
 - développement du portail salarié ;
 - développement du portail d’administration ;
 - intégration du SSO avec l’Active Directory ;
+- gestion de comptes d’administration locaux et indépendants de l’AD ;
 - mise en œuvre du MFA par e-mail pour l’administration ;
 - filtrage des adresses IP et sous-réseaux par les pare-feu et par Nginx ;
 - gestion des rôles et autorisations ;
-- intégration ou mise en relation avec les services de tickets, sauvegarde et documentation ;
-- Accès aux outils de supervision et d'administration des équipements depuis la platforme ;
-- intégration de l'accès aux VM de manière sécurisée ;
+- intégration ou mise en relation avec les services de VM, tickets, supervision, sauvegarde et documentation ;
 - journalisation et supervision des deux portails ;
 - tests fonctionnels, techniques et de sécurité ;
 - documentation et procédures d’exploitation.
 
 ### 4.2 Hors périmètre initial
-
-- mise en place complet de l’Active Directory ;
-- mise en place des outils spécialisés de supervision, de virtualisation, de sauvegarde ou de ticketing ;
+b
+- remplacement complet de l’Active Directory ;
+- remplacement des outils spécialisés de supervision, de virtualisation, de sauvegarde ou de ticketing ;
+- administration directe et non contrôlée des pare-feu, switches, hyperviseurs ou serveurs depuis une page Web ;
 - publication publique des portails sur Internet ;
+- publication directe de RDP TCP/3389 ou SSH TCP/22 ;
 - modification automatique d’une configuration réseau sans validation, journalisation et procédure de retour arrière ;
 - développement d’une application mobile native.
 
@@ -155,7 +154,6 @@ Le rôle Direction dispose des fonctions du rôle Employé et peut recevoir des 
 Le technicien utilise le portail d’administration. Selon son périmètre, il peut :
 
 - consulter l’état des services et équipements ;
-- accéder 
 - accéder aux outils de diagnostic autorisés ;
 - prendre en charge, commenter et clôturer des tickets ;
 - consulter la documentation et les procédures ;
@@ -304,7 +302,7 @@ Les liens ne constituent pas une autorisation à eux seuls. Chaque service cible
 
 | ID | Exigence | Priorité |
 | --- | --- | --- |
-| SAL-VM-001 | Chaque salarié doit être associé à une VM personnelle ou à un pool explicitement défini. | Haute |
+| SAL-VM-001 | Chaque salarié autorisé au télétravail doit être associé à une VM personnelle ou à un pool explicitement défini. | Haute |
 | SAL-VM-002 | Depuis l’extérieur, le salarié doit d’abord utiliser le VPN ou la passerelle d’accès sécurisée de l’entreprise avec MFA. | Critique |
 | SAL-VM-003 | Le portail doit diriger le salarié uniquement vers la VM qui lui est attribuée. | Critique |
 | SAL-VM-004 | RDP et SSH ne doivent jamais être publiés directement sur Internet. | Critique |
@@ -346,10 +344,11 @@ L’intégration avec GLPI est recommandée afin de ne pas recréer un moteur co
 | ID | Exigence | Priorité |
 | --- | --- | --- |
 | ADM-NET-001 | Le portail d’administration doit être hébergé sur des serveurs distincts de ceux du portail salarié. | Critique |
-| ADM-NET-002 | Le portail doit être accessible uniquement depuis les adresses du VLAN d’administration autorisé. Pour Site-B, le réseau candidat est 192.168.40.0/24, à confirmer avant déploiement. | Critique |
+| ADM-NET-002 | Le portail doit être accessible uniquement depuis les adresses du VLAN d’administration autorisé. Pour Site-B, le réseau est 172.16.1.96/27, conformément au schéma Site B version 1.1. | Critique |
 | ADM-NET-003 | Une adresse extérieure au VLAN d’administration doit recevoir un statut HTTP 403 avant d’atteindre l’application ou la page de connexion. | Critique |
 | ADM-NET-004 | Les ACL du switch et du pare-feu doivent compléter le filtrage Nginx. | Critique |
-| ADM-NET-005 | Le portail d'administration ne doit pas être joignable depuis les VLAN salariés, Wi-Fi, serveurs ordinaires ou Internet. | Critique |
+| ADM-NET-005 | Le portail ne doit pas être joignable depuis les VLAN salariés, Wi-Fi, serveurs ordinaires ou Internet. | Critique |
+| ADM-NET-006 | L’administration à distance doit nécessiter un VPN d’administration distinct, MFA et attribution d’une adresse appartenant au périmètre autorisé. | Haute |
 
 ### 8.2 Authentification locale distincte de l’AD
 
@@ -358,7 +357,7 @@ L’administrateur doit arriver directement sur une page de connexion. Son compt
 | ID | Exigence | Priorité |
 | --- | --- | --- |
 | ADM-AUTH-001 | Les comptes du portail d’administration doivent être stockés dans un référentiel indépendant de l’Active Directory d’entreprise. | Critique |
-| ADM-AUTH-002 | Les mots de passe doivent être hachés selon des paramètres conformes à l’état de l’art ; aucun mot de passe ne doit être stocké ou journalisé en clair. | Critique |
+| ADM-AUTH-002 | Les mots de passe doivent être hachés avec Argon2id selon des paramètres conformes à l’état de l’art ; aucun mot de passe ne doit être stocké ou journalisé en clair. | Critique |
 | ADM-AUTH-003 | Une politique de mot de passe, de verrouillage progressif et de protection contre la force brute doit être appliquée. | Critique |
 | ADM-AUTH-004 | Après validation du premier facteur, un code à usage unique doit être envoyé à l’adresse e-mail enregistrée de l’administrateur. | Critique |
 | ADM-AUTH-005 | Le code MFA doit être aléatoire, utilisable une seule fois, conservé sous forme protégée et expirer au plus tard après cinq minutes. | Critique |
@@ -383,8 +382,6 @@ Le tableau de bord doit présenter, selon les droits :
 - les principales alertes ;
 - l’utilisation CPU, mémoire et disque ;
 - l’état des sauvegardes et des derniers tests de restauration ;
-- les liens vers les platformes d'administration pour les serveurs Proxmox, Zabbix, GLPI ;
-- les liens vers les platformes d'administration pour les équipements Hillstone et TP-link ;
 - les tickets prioritaires ou en retard.
 
 ### 8.4 Rubriques d’administration
@@ -398,9 +395,9 @@ Le tableau de bord doit présenter, selon les droits :
 | VLAN | Identifiant, nom, sous-réseau, passerelle, fonction | Consulter |
 | VPN / accès distant | Tunnels intersites, sessions distantes et état | Consulter l’état ; révoquer une session si autorisé |
 | Machines virtuelles | Nom, utilisateur, système, IP, état, site et hyperviseur | Consulter ; affecter une VM selon validation |
-| Serveurs / services | Web, base de données, DNS, DHCP, annuaire et services métier | Consulter l’état et les dépendances ; Accéder aux platformes constructeurs |
-| Pare-feu / sécurité | Règles documentées, ACL, événements et écarts | Consulter ; aucune modification directe en V1 ; Accéder aux platformes constructeurs |
-| Supervision | Alertes, CPU, RAM, disque et disponibilité | Consulter, acquitter selon le rôle ; Accéder aux platformes constructeurs |
+| Serveurs / services | Web, base de données, DNS, DHCP, annuaire et services métier | Consulter l’état et les dépendances |
+| Pare-feu / sécurité | Règles documentées, ACL, événements et écarts | Consulter ; aucune modification directe en V1 |
+| Supervision | Alertes, CPU, RAM, disque et disponibilité | Consulter, acquitter selon le rôle |
 | Sauvegardes | Date, ressource, destination, résultat et dernier test de restauration | Consulter et signaler un échec |
 | Tickets / interventions | Demandes, priorité, technicien, statut et historique | Affecter, commenter et clôturer selon le rôle |
 | Documentation | Schémas, procédures, dossiers techniques et liens Git | Consulter et publier selon validation |
@@ -435,22 +432,31 @@ Toute future fonction de modification devra inclure :
 
 Légende : **C** consulter, **A** agir ou modifier dans son périmètre, **V** valider, **—** aucun accès.
 
+### Portail Employé
+
 | Ressource ou fonction | Employé | Direction | Technicien | Admin d’agence | Admin global |
 | --- | :---: | :---: | :---: | :---: | :---: |
 | Annonces et état de ses services | C | C | C | C | C |
 | Profil personnel | C/A limité | C/A limité | C/A limité | C/A limité | C/A limité |
-| Rôle, agence et droits personnels | — | — | — | — | C/A |
 | Services autorisés | C | C | C | C | C |
 | VM personnelle | C/connexion | C/connexion | Selon mission | Affectation locale | Affectation globale |
+| Création d’un ticket | A | A | A | A | A |
+| Suivi de ses tickets | C | C | C | C | C |
+| Demande de droit supplémentaire | A | A | A | A | A |
+
+### Portail Admin
+
+| Ressource ou fonction | Technicien | Admin d’agence | Admin global |
+| --- | :---: | :---: | :---: | :---: | :---: |
 | Création d’un ticket | A | A | A | A | A |
 | Suivi de ses tickets | C | C | C | C | C |
 | Traitement des tickets | — | — | A | A/V local | A/V global |
 | Demande de droit supplémentaire | A | A | A | A | A |
 | Validation d’un droit | — | — | — | V local | V global |
-| Tableau de bord technique | — | Synthèse autorisée | C | C local | C global |
-| Utilisateurs d’administration | — | — | — | C/A local limité | C/A global |
-| Agences | — | Synthèse | C | C local | C/A global |
-| Réseau et VLAN | — | — | C | C local | C global |
+| Tableau de bord technique | — | Synthèse autorisée | C Selon Mission | C local | C global |
+| Utilisateurs d’administration | — | — | — | C/A local | C/A global |
+| Agences | — | Synthèse | C Selon Mission | C local | C/A global |
+| Réseau et VLAN | — | — | C Selon Mission| C local | C global |
 | VPN et accès distant | — | — | C limité | C/A local | C/A global |
 | Serveurs, services et VM | — | — | C | C/A local | C/A global |
 | Pare-feu et sécurité | — | — | C limité | C local | C global |
@@ -844,7 +850,7 @@ Les maquettes doivent être validées avant le développement des écrans défin
 Les éléments suivants doivent être confirmés avant la réalisation :
 
 1. la liste exacte des CIDR autorisés pour le portail salarié ;
-2. la confirmation du VLAN d’administration 192.168.40.0/24 pour Site-B ;
+2. la validation des sources autorisées du VLAN d’administration 172.16.1.96/27 pour Site-B ;
 3. les noms DNS des deux portails ;
 4. l’autorité de certification utilisée ;
 5. le domaine AD, les groupes et attributs servant au mapping des rôles ;
