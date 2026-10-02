@@ -56,7 +56,7 @@ Le back-end doit également fournir des mécanismes techniques pour :
 - Gestion sécurisée de la photo de profil.
 - Catalogue des services filtré par utilisateur.
 - Consultation de l’affectation de VM et création d’un lancement sécurisé via Guacamole, RD Gateway ou une solution VDI validée.
-- Création et suivi des tickets par intégration avec GLPI si ce choix est confirmé.
+- Création et suivi des tickets par intégration avec GLPI si ce choix est confirmé. V1 lien simple vers l'outil GLPI
 - Création d’une demande de droit ou de service sous forme de ticket soumis à validation.
 - Journalisation structurée et transmission vers la plateforme centrale de logs.
 - Contrôles de santé, métriques techniques et gestion normalisée des erreurs.
@@ -69,43 +69,45 @@ Le back-end doit également fournir des mécanismes techniques pour :
 - Réinitialisation automatique d’un mot de passe AD.
 - Administration directe de Proxmox, des pare-feu, des commutateurs ou des serveurs.
 - Publication directe de RDP, SSH, d’une console hyperviseur ou d’un secret de connexion.
-- Moteur de ticketing complet si GLPI est retenu comme source de référence.
+- Moteur de ticketing complet si GLPI est retenu comme source de référence. Simplement inclure un lien vers l'outil GLPI
 - Application mobile native.
 - Automatisation d’une action technique critique.
 - Exposition directe du portail sur Internet.
 
 ### 3.3 Principe de la V1
 
-La V1 doit privilégier la **consultation**, la **mise en relation avec les services existants** et les parcours à faible risque. Toute opération ayant un effet sur l’infrastructure ou sur les habilitations doit rester une demande tracée, validée puis exécutée dans le référentiel autoritaire approprié.
+La V1 doit privilégier la **consultation**, la **mise en relation avec les services existants** (lien vers les différents outils mis en place) et les parcours à faible risque. Toute opération ayant un effet sur l’infrastructure ou sur les habilitations doit rester une demande tracée, validée puis exécutée dans le référentiel autoritaire approprié.
+
+(Cette version est une V1 staging, la plupart des outils peuvent être "simulés" par de simples page avec quelques données factices ou des liens si les services sont hebergés ailleurs, les liens "morts" sont aussi valides)
 
 ## 4. Décisions obligatoires avant développement
 
 Le développement ne doit pas commencer tant que les points marqués **bloquants** ne sont pas arbitrés et consignés dans une fiche de décision.
 
-| Sujet | Décision attendue | Statut initial |
+| Sujet | Décision attendue | Statut initial | Décision |
 | --- | --- | --- |
-| CIDR salariés | Valider la liste exacte des réseaux autorisés. Candidats Site-B : VLAN 10 `172.16.1.0/27`, VLAN 20 `172.16.1.32/27` et éventuellement VLAN 30 `172.16.1.64/27`. | Bloquant |
-| VLAN Wi-Fi | Le plan réseau actuel refuse au VLAN 30 l’accès aux autres réseaux privés hors DNS/DHCP. Décider si le portail doit lui être ouvert et adapter les ACL uniquement après validation. | Bloquant |
-| Publication | Confirmer que le portail salarié utilise un nom et un chemin réseau internes, accessibles aussi par le VPN d’entreprise, sans emprunter le DNAT Internet actuellement prévu vers le load balancer public. | Bloquant |
-| DNS | Choisir le nom DNS interne définitif du portail salarié. | Bloquant |
-| TLS | Désigner l’autorité de certification, le propriétaire des certificats et la procédure de renouvellement. | Bloquant |
-| Fournisseur d’identité | Confirmer Keycloak ou un équivalent, sa haute disponibilité et son mode de fédération LDAP/Kerberos avec l’AD. | Bloquant |
-| Identité stable | Définir le claim OIDC portant l’identifiant AD immuable, de préférence dérivé de l’`objectGUID`, et interdire l’e-mail comme clé primaire. | Bloquant |
-| Groupes et rôles | Valider les groupes AD, les attributs d’agence, les rôles `Employé` et `Direction`, ainsi que leur mapping applicatif. | Bloquant |
-| Ticketing | Confirmer GLPI, sa version, son API, le compte technique, les catégories, priorités et statuts exposés au salarié. | Bloquant pour le lot Tickets |
-| Accès VM | Choisir Guacamole, RD Gateway ou la solution VDI ; définir son API et le mécanisme de lancement temporaire. | Bloquant pour le lot VM |
-| Affectations VM | Désigner la source de référence de l’association salarié/VM et le processus de révocation lors d’un départ. | Bloquant pour le lot VM |
-| État des services | Désigner la source de l’état affiché : Zabbix, référentiel local contrôlé ou agrégateur dédié. | Bloquant pour l’accueil |
-| Annonces | Désigner la source de publication et les critères de ciblage par agence/rôle. | Bloquant pour l’accueil |
-| Données Direction | Définir les informations supplémentaires visibles par le rôle Direction. Aucun privilège technique ne doit être supposé. | Bloquant pour l’autorisation |
-| Photos | Valider formats, poids, dimensions, stockage, antivirus, durée de conservation et image par défaut. | Bloquant pour la modification du profil |
-| Sessions | Définir durée absolue, durée d’inactivité, règles de renouvellement et comportement de la déconnexion vis-à-vis du fournisseur d’identité. | Bloquant |
-| Conservation | Valider les durées de conservation des photos, tickets, projections, caches, traces techniques et journaux d’audit. | Bloquant avant production |
-| Capacité | Valider le nombre d’utilisateurs simultanés et les objectifs de charge. | Bloquant avant recette de performance |
-| Continuité | Valider RPO, RTO, fréquence des sauvegardes et procédure de restauration. | Bloquant avant production |
-| Demande sans authentification | Décider si une page séparée de demande de réinitialisation de mot de passe est réellement nécessaire. Elle ne doit pas être ajoutée par défaut au portail authentifié. | À arbitrer séparément |
+| CIDR salariés | Valider la liste exacte des réseaux autorisés. Candidats Site-B : VLAN 10 `172.16.1.0/27`, VLAN 20 `172.16.1.32/27` et éventuellement VLAN 30 `172.16.1.64/27`. | Bloquant | Les réseaux autorisés sont VLAN 10 et 20 |
+| VLAN Wi-Fi | Le plan réseau actuel refuse au VLAN 30 l’accès aux autres réseaux privés hors DNS/DHCP. Décider si le portail doit lui être ouvert et adapter les ACL uniquement après validation. | Bloquant | Le VLAN 30 n'a pas accès aux autres réseaux pour le moment, ouvertures si nécessaire plus tard. L'idée étant de donner aux postes du VLAN 30 accès uniquement au DHCP et proxy mis en place dans le VLAN 50 pour gérer tout accès à des resources externes |
+| Publication | Confirmer que le portail salarié utilise un nom et un chemin réseau internes, accessibles aussi par le VPN d’entreprise, sans emprunter le DNAT Internet actuellement prévu vers le load balancer public. | Bloquant | Le nome retenu pour ce service interne est novatech.local/portal |
+| DNS | Choisir le nom DNS interne définitif du portail salarié. | Bloquant | novatech.local/portal |
+| TLS | Désigner l’autorité de certification, le propriétaire des certificats et la procédure de renouvellement. | Bloquant | à décider, besoin de recherche sur la stratégie à adopter |
+| Fournisseur d’identité | Confirmer Keycloak ou un équivalent, sa haute disponibilité et son mode de fédération LDAP/Kerberos avec l’AD. | Bloquant | Keycloak retenu |
+| Identité stable | Définir le claim OIDC portant l’identifiant AD immuable, de préférence dérivé de l’`objectGUID`, et interdire l’e-mail comme clé primaire. | Bloquant | à décider, besoin de recherche sur la stratégie à adopter |
+| Groupes et rôles | Valider les groupes AD, les attributs d’agence, les rôles `Employé` et `Direction`, ainsi que leur mapping applicatif. | Bloquant | 5 rôles, direction, compta, technicien, admin local, admin global. tag site A, B et C pour les emplacements afin de réduire la visibilité des techniciens et des admins mais tout les employés sont taggés par leurs sites, à confirmer qu'il s'agit de la bonne stratégie, meilleurs option dans AD?
+| Ticketing | Confirmer GLPI, sa version, son API, le compte technique, les catégories, priorités et statuts exposés au salarié. | Bloquant pour le lot Tickets | V1 exposer un lien mort, à compléter par la suite, avancement itératif |
+| Accès VM | Choisir Guacamole, RD Gateway ou la solution VDI ; définir son API et le mécanisme de lancement temporaire. | Bloquant pour le lot VM | Exposer un lien mort, avancement itératif |
+| Affectations VM | Désigner la source de référence de l’association salarié/VM et le processus de révocation lors d’un départ. | Bloquant pour le lot VM | processus géré sur le portail administrateur, donnée partagée entre les deux portails, simuler un lien mort vers les VM, avancement itératif |
+| État des services | Désigner la source de l’état affiché : Zabbix, référentiel local contrôlé ou agrégateur dédié. | Bloquant pour l’accueil | artifacts factices pour V1, avancement itératif |
+| Annonces | Désigner la source de publication et les critères de ciblage par agence/rôle. | Bloquant pour l’accueil | artifacts factices pour V1, avancement itératif |
+| Données Direction | Définir les informations supplémentaires visibles par le rôle Direction. Aucun privilège technique ne doit être supposé. | Bloquant pour l’autorisation | artifacts factices pour V1, avancement itératif |
+| Photos | Valider formats, poids, dimensions, stockage, antivirus, durée de conservation et image par défaut. | Bloquant pour la modification du profil | artifacts factices pour V1, avancement itératif |
+| Sessions | Définir durée absolue, durée d’inactivité, règles de renouvellement et comportement de la déconnexion vis-à-vis du fournisseur d’identité. | Bloquant | durée absolue 6 heures, inactivité 1 heure, déconnexion du portail, reconnexion via l'AD, si question supplémentaires revenir sur ce point |
+| Conservation | Valider les durées de conservation des photos, tickets, projections, caches, traces techniques et journaux d’audit. | Bloquant avant production | suggestions par modèle IA |
+| Capacité | Valider le nombre d’utilisateurs simultanés et les objectifs de charge. | Bloquant avant recette de performance | 150 employés au total, capacité d'acceuil de 450 sessions concurrentes |
+| Continuité | Valider RPO, RTO, fréquence des sauvegardes et procédure de restauration. | Bloquant avant production | non bloquant pour V1, revoir le point plus tard |
+| Demande sans authentification | Décider si une page séparée de demande de réinitialisation de mot de passe est réellement nécessaire. Elle ne doit pas être ajoutée par défaut au portail authentifié. | À arbitrer séparément |non bloquant pour V1 |
 
-Chaque décision doit indiquer au minimum : date, décideur, choix retenu, options rejetées, raison, impact, exigences concernées et date de réexamen éventuelle.
+Chaque décision doit indiquer au minimum : date, décideur, choix retenu, options rejetées, raison, impact, exigences concernées et date de réexamen éventuelle. (note pour l'IA, ce genre de d'info n'est pas utile, il s'agit d'un projet de lab, seul la décision et les raisons sont utiles)
 
 ## 5. Architecture cible
 
