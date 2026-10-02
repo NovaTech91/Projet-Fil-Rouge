@@ -447,25 +447,26 @@ Légende : **C** consulter, **A** agir ou modifier dans son périmètre, **V** v
 ### Portail Admin
 
 | Ressource ou fonction | Technicien | Admin d’agence | Admin global |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| Création d’un ticket | A | A | A | A | A |
-| Suivi de ses tickets | C | C | C | C | C |
-| Traitement des tickets | — | — | A | A/V local | A/V global |
-| Demande de droit supplémentaire | A | A | A | A | A |
-| Validation d’un droit | — | — | — | V local | V global |
-| Tableau de bord technique | — | Synthèse autorisée | C Selon Mission | C local | C global |
-| Utilisateurs d’administration | — | — | — | C/A local | C/A global |
-| Agences | — | Synthèse | C Selon Mission | C local | C/A global |
-| Réseau et VLAN | — | — | C Selon Mission| C local | C global |
-| VPN et accès distant | — | — | C limité | C/A local | C/A global |
-| Serveurs, services et VM | — | — | C | C/A local | C/A global |
-| Pare-feu et sécurité | — | — | C limité | C local | C global |
-| Supervision | — | Synthèse | C/A limité | C/A local | C/A global |
-| Sauvegardes | — | — | C | C local | C global |
-| Documentation technique | — | Selon publication | C | C/A local | C/A global |
-| Modification directe d’un équipement critique en V1 | — | — | — | — | — |
+| --- | :---: | :---: | :---: |
+| Création d’un ticket | A | A | A |
+| Suivi de ses tickets | C | C | C |
+| Traitement des tickets | A local | A/V local | A/V global |
+| Demande de droit supplémentaire | A | A | A |
+| Validation d’un droit | — | V local | V global |
+| Tableau de bord technique | C local | C local | C global |
+| Utilisateurs d’administration | — | C/A local | C/A global |
+| Agences | C local | C local | C/A global |
+| Réseau et VLAN | C local | C local | C global |
+| VPN et accès distant | C local | C/A local | C/A global |
+| Serveurs, services et VM | C local | C/A local | C/A global |
+| Pare-feu et sécurité | C local | C local | C global |
+| Supervision | C/A local | C/A local | C/A global |
+| Sauvegardes | C local | C local | C global |
+| Documentation technique | C local | C/A local | C/A global |
+| Modification directe d’un équipement critique en V1 | — | — | — |
 
-Les droits réels doivent être évalués côté serveur à chaque requête. Masquer un bouton ou un menu ne constitue pas un contrôle d’autorisation.
+Les droits réels doivent être évalués côté serveur à chaque requête. Chaque resource est est taggé par rapport au site quelle concerne ou bien global si il s'agit d'une resource globale.
+Lorsqu'une requête est effectué, ce tag est comparé au tag de localisation du technicien ou de l'admin local avant d'exécuter la requête.
 
 ## 10. Architecture technique proposée
 
@@ -476,7 +477,7 @@ Architecture recommandée :
 1. un nom DNS interne dédié ;
 2. un pare-feu ou une ACL limitant les réseaux sources ;
 3. un reverse proxy/load balancer Nginx ;
-4. au moins deux instances applicatives si la haute disponibilité est retenue ;
+4. au moins deux instances applicatives ;
 5. un fournisseur d’identité compatible Kerberos et OpenID Connect, par exemple Keycloak fédéré avec l’AD ;
 6. une base applicative dédiée pour les données qui ne proviennent pas de l’AD ;
 7. des connecteurs limités vers GLPI, la passerelle de VM et les autres services autorisés.
