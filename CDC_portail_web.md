@@ -5,13 +5,12 @@
 | Élément | Valeur |
 | --- | --- |
 | Projet | Projet Fil Rouge — Portail Web et infrastructure multisite |
-| Périmètre de réalisation | Site-B / Application-Web |
+| Client | Novatech |
 | Document | Cahier des charges fonctionnel et technique |
-| Fichier | CDC_yanis.md |
-| Version | 0.1 |
-| Date | 22 septembre 2026 |
+| Fichier | CDC_final.md |
+| Version | 1|
+| Date | 06 10 2026 |
 | Statut | Proposition à valider avant réalisation |
-| Auteur | Yanis |
 
 ### 1.1 Objet
 
@@ -111,7 +110,7 @@ Les enjeux principaux sont :
 - documentation et procédures d’exploitation.
 
 ### 4.2 Hors périmètre initial
-b
+
 - remplacement complet de l’Active Directory ;
 - remplacement des outils spécialisés de supervision, de virtualisation, de sauvegarde ou de ticketing ;
 - administration directe et non contrôlée des pare-feu, switches, hyperviseurs ou serveurs depuis une page Web ;
@@ -455,7 +454,6 @@ Légende : **C** consulter, **A** agir ou modifier dans son périmètre, **V** v
 | Tableau de bord technique | C local | C local | C global |
 | Utilisateurs d’administration | — | C/A local | C/A global |
 | Affectation VM | — | A local | A global |
-| Réseau et VLAN | C local | C local | C global |
 | VPN et accès distant | C local | C/A local | C/A global |
 | Serveurs, services et VM | C local | C/A local | C/A global |
 | Pare-feu et sécurité | C local | C local | C global |
@@ -550,11 +548,6 @@ Le portail doit éviter la duplication des données. Une donnée synchronisée d
 ### 11.3 Sécurité applicative
 
 - Validation côté serveur de toutes les entrées.
-- Protection contre les injections, XSS, CSRF, traversées de chemin et téléversements malveillants.
-- Requêtes SQL paramétrées ou ORM correctement configuré.
-- En-têtes de sécurité, notamment Content-Security-Policy, X-Content-Type-Options et Referrer-Policy.
-- HSTS après validation de l’environnement HTTPS.
-- Limitation du débit sur les endpoints d’authentification et MFA.
 - Messages d’erreur sans informations techniques sensibles.
 - Dépendances suivies, analysées et mises à jour.
 - Audit de sécurité avant mise en production.
@@ -621,14 +614,10 @@ Objectifs proposés, à confirmer lors du dimensionnement :
 
 ### 12.3 Ergonomie et accessibilité
 
-- Interface responsive pour ordinateur et tablette.
-- Compatibilité avec les versions maintenues d’Edge, Chrome et Firefox.
-- Navigation clavier.
 - Contrastes lisibles et libellés explicites.
 - États et alertes compréhensibles sans dépendre uniquement de la couleur.
 - Formulaires avec messages d’erreur précis.
 - Interface en français pour la première version.
-- Respect des principes d’accessibilité applicables, avec comme cible le RGAA lorsque le contexte l’exige.
 
 ### 12.4 Maintenabilité
 
@@ -636,8 +625,6 @@ Objectifs proposés, à confirmer lors du dimensionnement :
 - Revue de code avant intégration.
 - Configuration séparée du code.
 - Variables sensibles injectées par un gestionnaire de secrets ou un mécanisme équivalent.
-- Migrations de base versionnées.
-- Tests automatisés des règles d’autorisation.
 - Documentation d’installation, d’exploitation et de dépannage.
 - Environnements de développement, recette et production distincts.
 
@@ -671,9 +658,6 @@ Menu proposé :
 
 - Tableau de bord ;
 - Utilisateurs ;
-- Agences ;
-- Réseau ;
-- VLAN ;
 - VPN / accès distant ;
 - Machines virtuelles ;
 - Serveurs / services ;
@@ -690,9 +674,6 @@ Menu proposé :
 2. saisie du code MFA reçu par e-mail ;
 3. tableau de bord global ou limité à l’agence ;
 4. utilisateurs et rôles ;
-5. fiche d’une agence ;
-6. réseau et plan d’adressage ;
-7. liste des VLAN ;
 8. état des VPN ;
 9. inventaire des VM ;
 10. serveurs et services ;
