@@ -1,4 +1,4 @@
-# Cahier des charges — Double portail Web de l’entreprise
+# Cahier des charges — NovaTech portail web
 
 ## 1. Identification du document
 
@@ -867,19 +867,5 @@ Le développement ne doit commencer qu’après validation :
 | Chef de projet | À compléter | À valider | À compléter | À compléter |
 | Référent infrastructure | À compléter | À valider | À compléter | À compléter |
 | Référent sécurité | À compléter | À valider | À compléter | À compléter |
-
-## 21. Références techniques
-
-Les références suivantes ont été utilisées pour contrôler les choix techniques. Leur consultation ne remplace pas la validation de sécurité propre à l’entreprise.
-
-- [Nginx — module de contrôle d’accès HTTP](https://nginx.org/en/docs/http/ngx_http_access_module.html) : listes allow/deny par adresse ou CIDR et refus par défaut ;
-- [Keycloak — guide d’administration](https://www.keycloak.org/docs/latest/server_admin/) : fédération LDAP/Active Directory, Kerberos/SPNEGO, OpenID Connect et SSO ;
-- [Microsoft — Integrated Windows Authentication](https://learn.microsoft.com/en-us/aspnet/web-api/overview/security/integrated-windows-authentication) : authentification intégrée adaptée aux applications intranet et aux postes joints au domaine ;
-- [OWASP — Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) : stockage des mots de passe avec un algorithme adaptatif moderne tel qu’Argon2id ;
-- [NIST SP 800-63B-4 — Authenticator Requirements](https://pages.nist.gov/800-63-4/sp800-63b/authenticators/) : exigences relatives aux authentificateurs, aux codes à usage unique et exclusion de l’e-mail comme canal d’authentification hors bande ;
-- [Apache Guacamole — manuel officiel](https://guacamole.apache.org/doc/gug/) : passerelle Web pour les protocoles de bureau à distance ;
-- [Apache Guacamole — sécurisation](https://guacamole.apache.org/doc/1.6.0/gug/security.html) : chiffrement TLS et utilisation d’un reverse proxy.
-
----
 
 **Fin du cahier des charges — version 0.1**
