@@ -12,6 +12,29 @@
 | Date | 06 10 2026 |
 | Statut | Proposition à valider avant réalisation |
 
+## Table des matières
+
+1. [Identification du document](#1-identification-du-document)
+2. [Contexte et enjeux](#2-contexte-et-enjeux)
+3. [Objectifs du projet](#3-objectifs-du-projet)
+4. [Périmètre](#4-périmètre)
+5. [Utilisateurs et rôles](#5-utilisateurs-et-rôles)
+6. [Architecture fonctionnelle à deux portails](#6-architecture-fonctionnelle-à-deux-portails)
+7. [Exigences du portail salarié](#7-exigences-du-portail-salarié)
+8. [Exigences du portail d’administration](#8-exigences-du-portail-dadministration)
+9. [Matrice des droits](#9-matrice-des-droits)
+10. [Architecture technique proposée](#10-architecture-technique-proposée)
+11. [Exigences de sécurité](#11-exigences-de-sécurité)
+12. [Exigences non fonctionnelles](#12-exigences-non-fonctionnelles)
+13. [Navigation et écrans attendus](#13-navigation-et-écrans-attendus)
+14. [Parcours principaux](#14-parcours-principaux)
+15. [Critères de recette](#15-critères-de-recette)
+16. [Livrables](#16-livrables)
+17. [Organisation et jalons proposés](#17-organisation-et-jalons-proposés)
+18. [Risques et mesures de réduction](#18-risques-et-mesures-de-réduction)
+19. [Hypothèses et points à valider](#19-hypothèses-et-points-à-valider)
+20. [Validation](#20-validation)
+
 ### 1.1 Objet
 
 Le présent document définit les exigences fonctionnelles, techniques, ergonomiques et de sécurité d’une plateforme Web interne destinée à une entreprise multisite.
