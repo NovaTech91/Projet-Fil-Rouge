@@ -5,13 +5,12 @@
 | Élément | Valeur |
 | --- | --- |
 | Projet | Projet Fil Rouge — Portail Web et infrastructure multisite |
-| Périmètre de réalisation | Site-B / Application-Web |
+| Client | Novatech |
 | Document | Cahier des charges fonctionnel et technique |
-| Fichier | CDC_yanis.md |
-| Version | 0.1 |
-| Date | 22 septembre 2026 |
+| Fichier | CDC_final.md |
+| Version | 1|
+| Date | 06 10 2026 |
 | Statut | Proposition à valider avant réalisation |
-| Auteur | Yanis |
 
 ### 1.1 Objet
 
@@ -111,7 +110,7 @@ Les enjeux principaux sont :
 - documentation et procédures d’exploitation.
 
 ### 4.2 Hors périmètre initial
-b
+
 - remplacement complet de l’Active Directory ;
 - remplacement des outils spécialisés de supervision, de virtualisation, de sauvegarde ou de ticketing ;
 - administration directe et non contrôlée des pare-feu, switches, hyperviseurs ou serveurs depuis une page Web ;
@@ -439,7 +438,7 @@ Légende : **C** consulter, **A** agir ou modifier dans son périmètre, **V** v
 | Annonces et état de ses services | C | C | C | C | C |
 | Profil personnel | C/A limité | C/A limité | C/A limité | C/A limité | C/A limité |
 | Services autorisés | C | C | C | C | C |
-| VM personnelle | C/connexion | C/connexion | Selon mission | Affectation locale | Affectation globale |
+| VM personnelle | C/connexion | C/connexion | C/connexion | C/connexion | C/connexion |
 | Création d’un ticket | A | A | A | A | A |
 | Suivi de ses tickets | C | C | C | C | C |
 | Demande de droit supplémentaire | A | A | A | A | A |
@@ -447,25 +446,24 @@ Légende : **C** consulter, **A** agir ou modifier dans son périmètre, **V** v
 ### Portail Admin
 
 | Ressource ou fonction | Technicien | Admin d’agence | Admin global |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| Création d’un ticket | A | A | A | A | A |
-| Suivi de ses tickets | C | C | C | C | C |
-| Traitement des tickets | — | — | A | A/V local | A/V global |
-| Demande de droit supplémentaire | A | A | A | A | A |
-| Validation d’un droit | — | — | — | V local | V global |
-| Tableau de bord technique | — | Synthèse autorisée | C Selon Mission | C local | C global |
-| Utilisateurs d’administration | — | — | — | C/A local | C/A global |
-| Agences | — | Synthèse | C Selon Mission | C local | C/A global |
-| Réseau et VLAN | — | — | C Selon Mission| C local | C global |
-| VPN et accès distant | — | — | C limité | C/A local | C/A global |
-| Serveurs, services et VM | — | — | C | C/A local | C/A global |
-| Pare-feu et sécurité | — | — | C limité | C local | C global |
-| Supervision | — | Synthèse | C/A limité | C/A local | C/A global |
-| Sauvegardes | — | — | C | C local | C global |
-| Documentation technique | — | Selon publication | C | C/A local | C/A global |
-| Modification directe d’un équipement critique en V1 | — | — | — | — | — |
+| --- | :---: | :---: | :---: |
+| Création d’un ticket | A | A | A |
+| Suivi de ses tickets | C | C | C |
+| Traitement des tickets | A local | A/V local | A/V global |
+| Validation d’un droit | — | V local | V global |
+| Tableau de bord technique | C local | C local | C global |
+| Utilisateurs d’administration | — | C/A local | C/A global |
+| Affectation VM | — | A local | A global |
+| VPN et accès distant | C local | C/A local | C/A global |
+| Serveurs, services et VM | C local | C/A local | C/A global |
+| Pare-feu et sécurité | C local | C local | C global |
+| Supervision | C/A local | C/A local | C/A global |
+| Sauvegardes | C local | C local | C global |
+| Documentation technique | C local | C/A local | C/A global |
+| Modification directe d’un équipement critique en V1 | — | — | — |
 
-Les droits réels doivent être évalués côté serveur à chaque requête. Masquer un bouton ou un menu ne constitue pas un contrôle d’autorisation.
+Les droits réels doivent être évalués côté serveur à chaque requête. Chaque resource est est taggé par rapport au site quelle concerne ou bien global si il s'agit d'une resource globale.
+Lorsqu'une requête est effectué, ce tag est comparé au tag de localisation du technicien ou de l'admin local avant d'exécuter la requête.
 
 ## 10. Architecture technique proposée
 
@@ -474,9 +472,9 @@ Les droits réels doivent être évalués côté serveur à chaque requête. Mas
 Architecture recommandée :
 
 1. un nom DNS interne dédié ;
-2. un pare-feu ou une ACL limitant les réseaux sources ;
+2. un pare-feu limitant les réseaux sources aux VLAN 10, 20 et 40 ;
 3. un reverse proxy/load balancer Nginx ;
-4. au moins deux instances applicatives si la haute disponibilité est retenue ;
+4. au moins deux instances applicatives ;
 5. un fournisseur d’identité compatible Kerberos et OpenID Connect, par exemple Keycloak fédéré avec l’AD ;
 6. une base applicative dédiée pour les données qui ne proviennent pas de l’AD ;
 7. des connecteurs limités vers GLPI, la passerelle de VM et les autres services autorisés.
@@ -504,21 +502,21 @@ Le portail d’administration ne doit pas réutiliser le cookie, la session, les
 | --- | --- | --- |
 | Reverse proxy et répartition | Nginx | Filtrage CIDR, terminaison TLS, routage, limitation de débit et équilibrage |
 | SSO salarié | Keycloak ou équivalent, fédéré à AD par LDAP/Kerberos, applications en OIDC | Sépare l’application de l’authentification et normalise les jetons et rôles |
-| Identités d’administration | Base locale distincte avec mots de passe Argon2id | Respecte l’exigence de comptes différents de l’AD |
+| Identités d’administration | Base locale distincte avec mots de passe hachés avec Argon2id | Respecte l’exigence de comptes différents de l’AD |
 | MFA administration | Code à usage unique envoyé par SMTP TLS | Conforme au parcours demandé et traçable |
 | Assistance | GLPI | Outil prévu pour les tickets, les statuts, l’affectation et l’historique |
-| Accès aux VM | Apache Guacamole, RD Gateway ou VDI | Évite l’exposition directe de RDP/SSH et centralise les contrôles |
-| Supervision | Zabbix ou solution équivalente | Centralise disponibilité, métriques et alertes |
+| Accès aux VM | RD Gateway | Évite l’exposition directe de RDP/SSH et centralise les contrôles, Windows server déjà présent dans l'architecture |
+| Supervision | Zabbix | Centralise disponibilité, métriques et alertes |
 | Virtualisation | API Proxmox en lecture seule pour la V1 | Permet l’inventaire et l’état sans exposer la console d’administration |
 | Documentation | Dépôt Git et portail documentaire avec publication contrôlée | Versionnement, validation et traçabilité |
-| Base de données | PostgreSQL ou moteur relationnel équivalent | Transactions, contraintes d’intégrité, sauvegarde et robustesse |
-| Journaux | Syslog ou plateforme de logs centralisée | Corrélation, recherche, alertes et conservation |
+| Base de données | PostgreSQL| Facilité de mise en place et d'administration, sauvegarde et robustesse |
+| Journaux | Loki+Promtail+Grafana | Facilité de mise en place et d'accès aux logs |
 
 ### 10.4 Données de référence
 
 - L’Active Directory est la source de référence des identités salariées, groupes, agences et rôles d’entreprise.
 - Le référentiel local d’administration est la source des comptes privilégiés du portail d’administration.
-- GLPI est la source de référence des tickets et interventions si l’intégration est retenue.
+- GLPI est la source de référence des tickets et interventions.
 - Zabbix est la source de référence de l’état de supervision.
 - Proxmox ou l’outil de virtualisation est la source de référence des VM et de leur état.
 - Le dépôt documentaire validé est la source de référence des procédures et schémas.
@@ -542,7 +540,7 @@ Le portail doit éviter la duplication des données. Une donnée synchronisée d
 
 - HTTPS obligatoire sur tous les parcours.
 - TLS 1.2 au minimum, TLS 1.3 privilégié.
-- Certificats issus de l’autorité interne ou d’une autorité approuvée.
+- Certificats issus de l’autorité interne.
 - Cookies Secure, HttpOnly et SameSite adaptés au parcours.
 - Secrets chiffrés au repos et exclus du dépôt Git.
 - Sauvegardes chiffrées et protégées par des droits distincts.
@@ -550,14 +548,9 @@ Le portail doit éviter la duplication des données. Une donnée synchronisée d
 ### 11.3 Sécurité applicative
 
 - Validation côté serveur de toutes les entrées.
-- Protection contre les injections, XSS, CSRF, traversées de chemin et téléversements malveillants.
-- Requêtes SQL paramétrées ou ORM correctement configuré.
-- En-têtes de sécurité, notamment Content-Security-Policy, X-Content-Type-Options et Referrer-Policy.
-- HSTS après validation de l’environnement HTTPS.
-- Limitation du débit sur les endpoints d’authentification et MFA.
 - Messages d’erreur sans informations techniques sensibles.
 - Dépendances suivies, analysées et mises à jour.
-- Tests de sécurité avant mise en production.
+- Audit de sécurité avant mise en production.
 
 ### 11.4 Journalisation et audit
 
@@ -621,14 +614,10 @@ Objectifs proposés, à confirmer lors du dimensionnement :
 
 ### 12.3 Ergonomie et accessibilité
 
-- Interface responsive pour ordinateur et tablette.
-- Compatibilité avec les versions maintenues d’Edge, Chrome et Firefox.
-- Navigation clavier.
 - Contrastes lisibles et libellés explicites.
 - États et alertes compréhensibles sans dépendre uniquement de la couleur.
 - Formulaires avec messages d’erreur précis.
 - Interface en français pour la première version.
-- Respect des principes d’accessibilité applicables, avec comme cible le RGAA lorsque le contexte l’exige.
 
 ### 12.4 Maintenabilité
 
@@ -636,8 +625,6 @@ Objectifs proposés, à confirmer lors du dimensionnement :
 - Revue de code avant intégration.
 - Configuration séparée du code.
 - Variables sensibles injectées par un gestionnaire de secrets ou un mécanisme équivalent.
-- Migrations de base versionnées.
-- Tests automatisés des règles d’autorisation.
 - Documentation d’installation, d’exploitation et de dépannage.
 - Environnements de développement, recette et production distincts.
 
@@ -671,9 +658,6 @@ Menu proposé :
 
 - Tableau de bord ;
 - Utilisateurs ;
-- Agences ;
-- Réseau ;
-- VLAN ;
 - VPN / accès distant ;
 - Machines virtuelles ;
 - Serveurs / services ;
@@ -690,9 +674,6 @@ Menu proposé :
 2. saisie du code MFA reçu par e-mail ;
 3. tableau de bord global ou limité à l’agence ;
 4. utilisateurs et rôles ;
-5. fiche d’une agence ;
-6. réseau et plan d’adressage ;
-7. liste des VLAN ;
 8. état des VPN ;
 9. inventaire des VM ;
 10. serveurs et services ;
@@ -765,10 +746,9 @@ Les maquettes doivent être validées avant le développement des écrans défin
 | --- | --- |
 | Salarié connecté au domaine | Connexion transparente par SSO |
 | Utilisateur non autorisé dans l’AD | Accès refusé et événement journalisé |
-| Employé consultant les menus | Aucun menu d’administration visible |
+| Employé consultant les menus | Aucun menu d’administration visible, états des services affichés, fil d'actualité entreprise affiché |
 | Appel direct d’une URL d’administration | Refus côté serveur |
 | Modification de la photo | Modification autorisée après contrôle du fichier |
-| Tentative de modification du rôle ou de l’agence | Refus |
 | Accès à la VM personnelle | Seule la VM attribuée est proposée |
 | Accès à la VM d’un autre salarié | Refus et journalisation |
 | Création d’un ticket | Identifiant créé et champs obligatoires présents |
@@ -778,16 +758,17 @@ Les maquettes doivent être validées avant le développement des écrans défin
 
 | Test | Résultat attendu |
 | --- | --- |
-| Utilisation des identifiants AD sur le portail admin | Échec, sauf coïncidence interdite par la politique de comptes |
+| Utilisation des identifiants AD sur le portail admin | Échec de la connexion et journalisation |
 | Mot de passe local correct sans code MFA | Session non créée |
 | Code MFA correct et non expiré | Session créée selon le rôle |
-| Code incorrect, expiré ou réutilisé | Refus |
+| Code incorrect, expiré ou réutilisé | Refus et journalisation |
 | Multiples essais d’authentification | Limitation, verrouillage progressif et journalisation |
-| Technicien ouvrant une fonction globale interdite | Refus côté serveur |
-| Administrateur d’agence consultant une autre agence | Refus |
-| Administrateur global consultant les quatre sites | Accès autorisé |
-| Tentative de modification directe d’un pare-feu en V1 | Fonction absente ou refusée |
-| Suspension d’un compte admin | Sessions actives invalidées |
+| Technicien ouvrant une fonction globale interdite | Refus côté serveur et journalisation |
+| Administrateur d’agence consultant une autre agence | Refus et journalisation |
+| Administrateur global consultant les trois sites | Accès autorisé |
+| Consultation du portail local| resources locales affichées |
+| Affectation des VM | l'admin peut affecter une VM à un utilisateur |
+| Deconnexion d’un compte admin | Sessions actives invalidées |
 
 ### 15.4 Recette de traçabilité et de restauration
 
